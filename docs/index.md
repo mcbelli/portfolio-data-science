@@ -2,7 +2,9 @@
 
 # 
 
-# Welcome to Michael Belli's data science and econometrics portfolio.  
+# Welcome to Michael Belli’s data science and econometrics portfolio.
+
+# 
 
 # This project uses a simulated panel dataset of retail stores to demonstrate:
 
@@ -10,7 +12,7 @@
 
 # \- How data-generating processes (DGPs) work  
 
-# \- How different econometric models estimate (or fail to correctly estimate) the true effects  
+# \- How different econometric models estimate (or fail to correctly estimate) true effects  
 
 # \- How model misspecification affects inference  
 
@@ -18,47 +20,93 @@
 
 # 
 
-# This site will include:
+# ---
 
 # 
 
-# \### 📘 Technical Section (with code)
+# \## 📘 Technical Section (with full code)
 
-# \- Data generation process (DGP)
+# 
+
+# This section contains:
+
+# 
+
+# \- Data Generation Process (DGP)
 
 # \- Naive OLS model
 
-# \- Two-way fixed effects model (TWFE)
+# \- Two-way fixed effects (TWFE) model
 
 # \- Model evaluation metrics
 
-# \- Visualizations
+# \- Visualizations showing model performance
 
-# \- Code for all models
-
-# 
-
-# \### 📙 Non-Technical Section (no code)
-
-# \- Business-focused explanations
-
-# \- Key results and takeaways
-
-# \- Visualizations only
-
-# \- Why certain models work better
+# \- Full Python code
 
 # 
 
-# \### 🏆 Model Comparison
+# You can explore the models here:
 
-# \- Side-by-side RMSE
+# 
 
-# \- R² comparisons
+# \- \[OLS Naive Model](models/ols\_naive.md)
 
-# \- Coefficient recovery: |β\_est − β\_true|
+# \- \[Two-Way Fixed Effects Model](models/twfe\_full.md)
 
-# \- Champion vs. Naive visualization
+# 
+
+# ---
+
+# 
+
+# \## 📙 Non-Technical Section (no code)
+
+# 
+
+# This version is designed for product owners, executives, and non-technical audiences.  
+
+# It summarizes the key insights and business meanings \*without any code.\*
+
+# 
+
+# Coming soon:
+
+# 
+
+# \- High-level explanation of the DGP  
+
+# \- Visualizations of model behavior  
+
+# \- Simple explanation of why TWFE beats OLS  
+
+# \- Practical business takeaways  
+
+# 
+
+# ---
+
+# 
+
+# \## 🏆 Model Comparison
+
+# 
+
+# Once both models are implemented, you’ll be able to view:
+
+# 
+
+# \- RMSE comparisons  
+
+# \- R² comparisons  
+
+# \- Coefficient recovery: \\|β\_est − β\_true\\|  
+
+# \- Visual “Champion vs. Naive” summary  
+
+# 
+
+# ---
 
 # 
 
