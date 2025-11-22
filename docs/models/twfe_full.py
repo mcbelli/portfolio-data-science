@@ -1,30 +1,7 @@
-# Two-Way Fixed Effects Model (Champion Model)
 
-This model uses the full information available in the simulated dataset. It includes store fixed effects, week fixed effects, competitor price, competitor count, advertising lag effects, and unobserved store attributes such as manager experience and vacancy status. Because the DGP includes these factors, the TWFE model is correctly specified and is expected to recover the true coefficients more accurately than the naive OLS model.
 
-## Model Specification
+# models/twfe_full.py
 
-The model is:
-
-log(Sales_it) = 
-  alpha_i 
-  + gamma_t
-  + beta_price * Price_it
-  + beta_relprice * RelativePrice_it
-  + beta_ad * AdSpend_it
-  + beta_adlag * AdSpendLag_it
-  + beta_competitors * CompetitorCount_it
-  + beta_size * StoreSize_i
-  + beta_income * AreaIncome_i
-  + beta_mgr * ManagerExperience_i
-  + beta_vacancy * ManagerVacant_i
-  + error_it
-
-Store fixed effects absorb all time-invariant differences between stores, including size, income, and manager properties. Week fixed effects absorb time shocks such as seasonality. The relative price variable is the ratio of the competitor price to own price.
-
-## Python Code
-
-```python
 # Two-Way Fixed Effects Champion Model
 
 import pandas as pd
@@ -38,33 +15,27 @@ df = pd.read_csv("../data/final_simulated_panel.csv")
 # Create log_sales
 df["log_sales"] = np.log(df["sales"])
 
-# Relative price (competitor price divided by own price)
+# Relative price
 df["relative_price"] = df["competitor_price"] / df["price"]
 
-# Model formula with store and week fixed effects
+# Model with store and week fixed effects
 formula = (
     "log_sales ~ price + relative_price + ad_spend + ad_spend_lag + "
     "competitor_count + store_size + area_income + manager_experience + "
     "manager_vacant + C(store_id) + C(week)"
 )
 
-# Fit TWFE model
+# Fit model
 model = smf.ols(formula=formula, data=df).fit()
 
 print(model.summary())
 
 # Evaluation metrics
 
-# Predicted values
 pred = model.predict(df)
-
-# RMSE
 rmse = np.sqrt(np.mean((pred - df["log_sales"])**2))
-
-# R-squared
 r2 = model.rsquared
 
-# True parameters from the DGP (example values)
 true_betas = {
     "price": -1.2,
     "relative_price": -0.8,
@@ -74,10 +45,9 @@ true_betas = {
     "store_size": 0.3,
     "area_income": 0.02,
     "manager_experience": 0.01,
-    "manager_vacant": -0.05,
+    "manager_vacant": -0.05
 }
 
-# Coefficient recovery
 beta_errors = {}
 for name, true_val in true_betas.items():
     if name in model.params:
@@ -92,7 +62,6 @@ for k, v in beta_errors.items():
 
 # Visualizations
 
-# Predicted vs True
 plt.figure(figsize=(6,6))
 plt.scatter(df["log_sales"], pred, alpha=0.4)
 plt.xlabel("True log(Sales)")
@@ -101,7 +70,6 @@ plt.title("Predicted vs. True - TWFE Champion")
 plt.savefig("../assets/figures/twfe_pred_vs_true.png")
 plt.close()
 
-# Residual histogram
 plt.figure(figsize=(6,4))
 plt.hist(model.resid, bins=40)
 plt.title("Residual Distribution - TWFE Champion")
