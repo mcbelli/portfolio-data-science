@@ -1,4 +1,4 @@
-# \## 🔍 Explore the Models
+# \## Explore the Models
 
 # 
 
