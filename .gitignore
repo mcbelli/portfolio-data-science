@@ -1,0 +1,8 @@
+# Ignore runtime data outputs
+data/
+
+# Python cache files
+__pycache__/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
