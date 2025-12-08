@@ -1,7 +1,7 @@
 {
-  "intercept": 4.5,
-  "price": -1.2,
-  "relative_price": -0.8,
+  "intercept": 22.0,
+  "price": -0.12,
+  "relative_price": -1.31,
   "ad_spend": 0.05,
   "ad_spend_lag": 0.02,
   "competitor_count": -0.15,

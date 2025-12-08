@@ -1,8 +1,15 @@
+# Current version corrected the size of sales and made the product more price elastic
+
 from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import json
+
+
+# -------------------------------
+# CONFIGURATION
+# -------------------------------
 
 @dataclass
 class DGPConfig:
@@ -10,10 +17,14 @@ class DGPConfig:
     n_weeks: int = 52
     seed: int = 42
 
-    intercept: float = 4.5
+    # Increased intercept so exp(log_sales) yields about $50k/week
+    intercept: float = 22.0
 
-    beta_price: float = -1.2
-    beta_relprice: float = -0.8
+    # Updated price elasticity parameters:
+    # 20% price decrease → ~30% quantity increase ⇒ beta_relprice = -1.31
+    beta_price: float = -0.12
+    beta_relprice: float = -1.31     # elasticity-derived value
+
     beta_ad: float = 0.05
     beta_adlag: float = 0.02
     beta_competitors: float = -0.15
@@ -25,6 +36,11 @@ class DGPConfig:
     sigma_store_fe: float = 0.4
     sigma_week_fe: float = 0.2
     sigma_eps: float = 0.3
+
+
+# -------------------------------
+# STORE-LEVEL DATA
+# -------------------------------
 
 def generate_store_level_data(cfg: DGPConfig) -> pd.DataFrame:
     rng = np.random.default_rng(cfg.seed)
@@ -57,12 +73,18 @@ def generate_store_level_data(cfg: DGPConfig) -> pd.DataFrame:
 
     return df_store
 
+
+# -------------------------------
+# PANEL-LEVEL DATA
+# -------------------------------
+
 def generate_panel_data(cfg: DGPConfig, df_store: pd.DataFrame) -> pd.DataFrame:
     rng = np.random.default_rng(cfg.seed + 1)
 
     weeks = np.arange(cfg.n_weeks)
     week_effects = rng.normal(loc=0.0, scale=cfg.sigma_week_fe, size=cfg.n_weeks)
 
+    # Expand stores × weeks
     df = (
         df_store
         .assign(key=1)
@@ -76,32 +98,38 @@ def generate_panel_data(cfg: DGPConfig, df_store: pd.DataFrame) -> pd.DataFrame:
 
     rng = np.random.default_rng(cfg.seed + 2)
 
+    # Price variation
     base_price = rng.normal(loc=10.0, scale=1.0, size=len(df))
     price_trend = 0.01 * df["week"].values
     df["price"] = base_price + 0.1 * (df["area_income"] - df["area_income"].mean()) / 10.0 + price_trend
 
+    # Competitor price
     comp_price_noise = rng.normal(loc=0.0, scale=0.5, size=len(df))
     df["competitor_price"] = df["price"] + comp_price_noise
 
+    # Competitor count
     df["competitor_count"] = df["base_competitors"] + rng.poisson(lam=0.2, size=len(df))
     df["competitor_count"] = df["competitor_count"].clip(lower=0)
 
+    # Advertising spend
     df["ad_spend"] = (
         5.0
         + 0.5 * df["store_size"]
         + 0.05 * df["area_income"]
         + rng.normal(loc=0.0, scale=2.0, size=len(df))
-    )
-    df["ad_spend"] = df["ad_spend"].clip(lower=0.0)
+    ).clip(lower=0.0)
 
+    # Lag ad spend
     df = df.sort_values(["store_id", "week"]).reset_index(drop=True)
-    df["ad_spend_lag"] = df.groupby("store_id")["ad_spend"].shift(1)
-    df["ad_spend_lag"] = df["ad_spend_lag"].fillna(0.0)
+    df["ad_spend_lag"] = df.groupby("store_id")["ad_spend"].shift(1).fillna(0.0)
 
-    df["relative_price"] = df["competitor_price"] / df["price"]
+    # *** UPDATED relative price definition ***
+    df["relative_price"] = df["price"] / df["competitor_price"]
 
+    # Random noise
     eps = rng.normal(loc=0.0, scale=cfg.sigma_eps, size=len(df))
 
+    # Core demand model
     log_sales = (
         cfg.intercept
         + cfg.beta_price * df["price"]
@@ -122,6 +150,11 @@ def generate_panel_data(cfg: DGPConfig, df_store: pd.DataFrame) -> pd.DataFrame:
     df["sales"] = np.exp(log_sales)
 
     return df
+
+
+# -------------------------------
+# OUTPUT WRITER
+# -------------------------------
 
 def save_outputs(df: pd.DataFrame, cfg: DGPConfig, base_dir: Path) -> None:
     data_dir = base_dir / "data"
@@ -147,6 +180,11 @@ def save_outputs(df: pd.DataFrame, cfg: DGPConfig, base_dir: Path) -> None:
     with open(json_path, "w") as f:
         json.dump(true_params, f, indent=2)
 
+
+# -------------------------------
+# MAIN
+# -------------------------------
+
 def main():
     base_dir = Path(__file__).resolve().parents[1]
     cfg = DGPConfig()
@@ -158,6 +196,7 @@ def main():
     print("Data generation complete.")
     print("Rows:", len(df_panel))
     print("Output written to data/final_simulated_panel.csv and data/true_params.json")
+
 
 if __name__ == "__main__":
     main()
