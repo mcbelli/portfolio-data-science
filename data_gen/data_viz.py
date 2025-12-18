@@ -7,6 +7,9 @@ from pathlib import Path
 
 # Load data
 base_dir = Path(__file__).resolve().parents[1]
+print('base_dir is: ')
+print(base_dir)
+
 df = pd.read_csv(base_dir / "data" / "final_simulated_panel.csv")
 
 # Create output directory
@@ -41,18 +44,30 @@ plt.savefig(fig_dir / "sales_vs_store_size.png")
 plt.close()
 
 # 4. Sales vs manager experience with vacancy as an experience bin
-df["experience_bin"] = pd.cut(
-    df["manager_experience"],
-    bins=[0, 2, 5, 10, 20, 50],
-    labels=["0-2", "3-5", "6-10", "11-20", "21+"],
-    include_lowest=True
+df["experience_bin"] = (
+    pd.cut(
+        df["manager_experience"],
+        bins=[0, 2, 5, 10, 20, 50],
+        labels=["0-2", "3-5", "6-10", "11-20", "21+"],
+        include_lowest=True
+    )
+    .cat.add_categories("Vacant")
 )
 
-df.loc[df["manager_vacant"] == 1, "experience_bin"] = "Vacant"
-
-sales_by_exp = df.groupby("experience_bin")["sales"].mean().reindex(
-    ["Vacant", "0-2", "3-5", "6-10", "11-20", "21+"]
+df["experience_bin"] = df["experience_bin"].where(
+    df["manager_vacant"] == 0, "Vacant"
 )
+
+
+#sales_by_exp = df.groupby("experience_bin")["sales"].mean().reindex(
+#    ["Vacant", "0-2", "3-5", "6-10", "11-20", "21+"]
+#)
+sales_by_exp = (
+    df.groupby("experience_bin", observed=False)["sales"]
+      .mean()
+      .reindex(["Vacant", "0-2", "3-5", "6-10", "11-20", "21+"])
+)
+
 
 plt.figure(figsize=(7, 5))
 sales_by_exp.plot(kind="bar")
@@ -74,14 +89,18 @@ plt.savefig(fig_dir / "sales_vs_relative_price.png")
 plt.close()
 
 # 6. Sales by binned relative price
-df["relative_price_bin"] = pd.cut(
-    df["relative_price"],
+
+# 6. Sales by binned relative price
+df["relative_price_bin"] = pd.cut( df["relative_price"],
     bins=[0.0, 0.8, 0.95, 1.05, 1.2, 5.0],
     labels=["<0.8", "0.80-0.95", "0.95-1.05", "1.05-1.20", "1.20+"],
-    include_lowest=True
-)
+     include_lowest=True )
 
-sales_by_rel_price = df.groupby("relative_price_bin")["sales"].mean()
+#sales_by_rel_price = df.groupby("relative_price_bin")["sales"].mean()
+sales_by_rel_price = df.groupby(
+    "relative_price_bin", observed=False
+)["sales"].mean()
+
 
 plt.figure(figsize=(7, 5))
 sales_by_rel_price.plot(kind="bar")
