@@ -5,46 +5,188 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+# -----------------------------
 # Load data
+# -----------------------------
 base_dir = Path(__file__).resolve().parents[1]
-print('base_dir is: ')
+print("base_dir is:")
 print(base_dir)
 
 df = pd.read_csv(base_dir / "data" / "final_simulated_panel.csv")
 
-# Create output directory
+print("df columns:")
+for col in df.columns:
+    print(col)
+print("End of df.columns\n")
+
+# Work from a single analysis dataframe
+df_panel = df.copy()
+
+# -----------------------------
+# Derive time variables
+# -----------------------------
+df_panel["year"] = df_panel["week"] // 52 + 1
+df_panel["week_of_year"] = df_panel["week"] % 52 + 1
+
+# Define month as 4-week blocks (13 months/year)
+df_panel["month"] = (df_panel["week_of_year"] - 1) // 4 + 1
+
+# -----------------------------
+# Ad spend aggregation
+# -----------------------------
+ad_cols = [
+    "spend_paid_search",
+    "spend_paid_social",
+    "spend_broadcast_tv",
+    "spend_stream_tv",
+    "spend_direct_mail",
+    "spend_print",
+    "spend_other"
+]
+
+df_panel["total_ad_spend"] = df_panel[ad_cols].sum(axis=1)
+
+# -----------------------------
+# SANITY CHECK 1: Weekly sales by year
+# -----------------------------
+weekly_sales = (
+    df_panel
+    .groupby(["year", "week_of_year"], observed=True)["sales"]
+    .sum()
+    .reset_index()
+)
+
 fig_dir = base_dir / "assets" / "figures"
 fig_dir.mkdir(parents=True, exist_ok=True)
 
+plt.figure(figsize=(10, 6))
+
+for yr in sorted(weekly_sales["year"].unique()):
+    sub = weekly_sales[weekly_sales["year"] == yr]
+    plt.plot(sub["week_of_year"], sub["sales"], label=f"Year {yr}")
+
+plt.xlabel("Week of Year")
+plt.ylabel("Total Sales")
+plt.title("Weekly Total Sales by Year")
+plt.ylim(bottom=0)
+plt.legend()
+plt.tight_layout()
+plt.savefig(fig_dir / "weekly_sales_by_year.png")
+plt.close()
+
+# -----------------------------
+# SANITY CHECK 2: Monthly sales and spend
+# -----------------------------
+monthly = (
+    df_panel
+    .groupby(["year", "month"], observed=True)
+    .agg(
+        total_sales=("sales", "sum"),
+        total_ad_spend=("total_ad_spend", "sum")
+    )
+    .reset_index()
+)
+
+# Monthly sales
+plt.figure(figsize=(10, 6))
+
+for y in sorted(monthly["year"].unique()):
+    sub = monthly[monthly["year"] == y]
+    plt.plot(sub["month"], sub["total_sales"], marker="o", label=f"Year {y}")
+
+plt.xlabel("Month")
+plt.ylabel("Total Sales")
+plt.title("Monthly Total Sales by Year")
+plt.ylim(bottom=0)
+plt.legend()
+plt.tight_layout()
+plt.savefig(fig_dir / "monthly_total_sales_by_year.png")
+plt.close()
+
+# Monthly ad spend
+plt.figure(figsize=(10, 6))
+
+for y in sorted(monthly["year"].unique()):
+    sub = monthly[monthly["year"] == y]
+    plt.plot(sub["month"], sub["total_ad_spend"], marker="o", label=f"Year {y}")
+
+plt.xlabel("Month")
+plt.ylabel("Total Ad Spend")
+plt.title("Monthly Total Ad Spend by Year")
+plt.ylim(bottom=0)
+plt.legend()
+plt.tight_layout()
+plt.savefig(fig_dir / "monthly_total_ad_spend_by_year.png")
+plt.close()
+
+
+# weekly sales and spend
+# -----------------------------
+# SANITY CHECK 3: Weekly ad spend by year
+# -----------------------------
+weekly_spend = (
+    df_panel
+    .groupby(["year", "week_of_year"], observed=True)["total_ad_spend"]
+    .sum()
+    .reset_index()
+)
+
+plt.figure(figsize=(10, 6))
+
+for year, sub in weekly_spend.groupby("year"):
+    plt.plot(
+        sub["week_of_year"],
+        sub["total_ad_spend"],
+        label=f"Year {year}"
+    )
+
+plt.xlabel("Week of Year")
+plt.ylabel("Total Advertising Spend")
+plt.title("Total Weekly Advertising Spend by Year")
+plt.ylim(bottom=0)
+plt.legend()
+plt.tight_layout()
+plt.savefig(fig_dir / "total_weekly_ad_spend_by_year.png")
+plt.close()
+
+# more checks
+
 # 1. Sales vs price scatterplot
 plt.figure(figsize=(6, 5))
-plt.scatter(df["price"], df["sales"], alpha=0.3)
+plt.scatter(df_panel["price"], df_panel["sales"], alpha=0.3)
 plt.xlabel("Price")
 plt.ylabel("Sales")
 plt.title("Sales vs Price")
 plt.savefig(fig_dir / "sales_vs_price.png")
 plt.close()
 
+#for col in df_panel:
+#    print(col)
+
 # 2. Sales vs advertising scatterplot
 plt.figure(figsize=(6, 5))
-plt.scatter(df["ad_spend"], df["sales"], alpha=0.3)
+plt.scatter(df_panel["total_ad_spend"], df_panel["sales"], alpha=0.3)
 plt.xlabel("Advertising Spend")
 plt.ylabel("Sales")
 plt.title("Sales vs Advertising Spend")
 plt.savefig(fig_dir / "sales_vs_ad_spend.png")
 plt.close()
 
+
+breakpoint()
+
 # 3. Sales vs store size scatterplot
 plt.figure(figsize=(6, 5))
-plt.scatter(df["store_size"], df["sales"], alpha=0.3)
+plt.scatter(df_panel["store_size"], df_panel["sales"], alpha=0.3)
 plt.xlabel("Store Size")
 plt.ylabel("Sales")
 plt.title("Sales vs Store Size")
 plt.savefig(fig_dir / "sales_vs_store_size.png")
 plt.close()
 
+
 # 4. Sales vs manager experience with vacancy as an experience bin
-df["experience_bin"] = (
+df_panel["experience_bin"] = (
     pd.cut(
         df["manager_experience"],
         bins=[0, 2, 5, 10, 20, 50],
@@ -54,8 +196,8 @@ df["experience_bin"] = (
     .cat.add_categories("Vacant")
 )
 
-df["experience_bin"] = df["experience_bin"].where(
-    df["manager_vacant"] == 0, "Vacant"
+df_panel["experience_bin"] = df_panel["experience_bin"].where(
+    df_panel["manager_vacant"] == 0, "Vacant"
 )
 
 
@@ -63,7 +205,7 @@ df["experience_bin"] = df["experience_bin"].where(
 #    ["Vacant", "0-2", "3-5", "6-10", "11-20", "21+"]
 #)
 sales_by_exp = (
-    df.groupby("experience_bin", observed=False)["sales"]
+    df_panel.groupby("experience_bin", observed=False)["sales"]
       .mean()
       .reindex(["Vacant", "0-2", "3-5", "6-10", "11-20", "21+"])
 )
@@ -78,6 +220,8 @@ plt.xticks(rotation=45)
 plt.tight_layout()
 plt.savefig(fig_dir / "sales_by_manager_experience.png")
 plt.close()
+
+
 
 # 5. Sales vs relative price scatterplot
 plt.figure(figsize=(6, 5))
