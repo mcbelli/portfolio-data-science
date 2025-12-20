@@ -1,4 +1,7 @@
 # Current version corrected the size of sales and made the product more price elastic
+# this script 1) creates a dataclass to make setting and changing the details of the data gen easier and more reliable
+# 2) generates store-level data and store-specific characteristics
+# this version has just ad_spend as a general category and 52 weeks
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,12 +45,15 @@ class DGPConfig:
 # STORE-LEVEL DATA
 # -------------------------------
 
+# set up generate_store_level_data to expect cfg to be an instance of the DGPConfig dataclass defined above
+# return as a dataframe
 def generate_store_level_data(cfg: DGPConfig) -> pd.DataFrame:
     rng = np.random.default_rng(cfg.seed)
 
     store_ids = np.arange(cfg.n_stores)
-
+    # store size normalized to 1 here as the average
     store_size = rng.normal(loc=1.0, scale=0.2, size=cfg.n_stores)
+    # don't let the store size get too small, but allow big
     store_size = np.clip(store_size, 0.5, None)
 
     area_income = rng.normal(loc=60.0, scale=10.0, size=cfg.n_stores)
@@ -78,6 +84,7 @@ def generate_store_level_data(cfg: DGPConfig) -> pd.DataFrame:
 # PANEL-LEVEL DATA
 # -------------------------------
 
+# generate the weekly data, including sales
 def generate_panel_data(cfg: DGPConfig, df_store: pd.DataFrame) -> pd.DataFrame:
     rng = np.random.default_rng(cfg.seed + 1)
 
