@@ -173,7 +173,6 @@ plt.savefig(fig_dir / "sales_vs_ad_spend.png")
 plt.close()
 
 
-breakpoint()
 
 # 3. Sales vs store size scatterplot
 plt.figure(figsize=(6, 5))
@@ -225,7 +224,7 @@ plt.close()
 
 # 5. Sales vs relative price scatterplot
 plt.figure(figsize=(6, 5))
-plt.scatter(df["relative_price"], df["sales"], alpha=0.3)
+plt.scatter(df_panel["relative_price"], df_panel["sales"], alpha=0.3)
 plt.xlabel("Relative Price (Competitor Price / Own Price)")
 plt.ylabel("Sales")
 plt.title("Sales vs Relative Price")
@@ -235,13 +234,13 @@ plt.close()
 # 6. Sales by binned relative price
 
 # 6. Sales by binned relative price
-df["relative_price_bin"] = pd.cut( df["relative_price"],
+df_panel["relative_price_bin"] = pd.cut( df_panel["relative_price"],
     bins=[0.0, 0.8, 0.95, 1.05, 1.2, 5.0],
     labels=["<0.8", "0.80-0.95", "0.95-1.05", "1.05-1.20", "1.20+"],
      include_lowest=True )
 
-#sales_by_rel_price = df.groupby("relative_price_bin")["sales"].mean()
-sales_by_rel_price = df.groupby(
+#sales_by_rel_price = df_panel.groupby("relative_price_bin")["sales"].mean()
+sales_by_rel_price = df_panel.groupby(
     "relative_price_bin", observed=False
 )["sales"].mean()
 
@@ -257,13 +256,13 @@ plt.savefig(fig_dir / "sales_by_relative_price_bin.png")
 plt.close()
 
 # 7. Sales over time for 5 random stores
-unique_stores = df["store_id"].unique()
+unique_stores = df_panel["store_id"].unique()
 np.random.seed(42)
 sample_stores = np.random.choice(unique_stores, size=5, replace=False)
 
 plt.figure(figsize=(10, 6))
 for s in sample_stores:
-    sub = df[df["store_id"] == s].sort_values("week")
+    sub = df_panel[df_panel["store_id"] == s].sort_values("week")
     plt.plot(sub["week"], sub["sales"], label=f"Store {s}")
 
 plt.xlabel("Week")
