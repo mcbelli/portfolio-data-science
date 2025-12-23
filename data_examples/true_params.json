@@ -2,11 +2,80 @@
   "intercept": 22.0,
   "price": -0.12,
   "relative_price": -1.31,
-  "ad_spend": 0.05,
-  "ad_spend_lag": 0.02,
   "competitor_count": -0.15,
   "store_size": 0.3,
   "area_income": 0.02,
   "manager_experience": 0.01,
-  "manager_vacant": -0.05
+  "manager_vacant": -0.05,
+  "beta_channel": {
+    "paid_search": 0.25,
+    "paid_social": 0.18,
+    "broadcast_tv": 0.1,
+    "stream_tv": 0.12,
+    "direct_mail": 0.15,
+    "print": 0.06,
+    "other": 0.05
+  },
+  "interaction_strength": 0.35,
+  "adstock_decay_broadcast_tv": 0.75,
+  "adstock_decay_stream_tv": 0.65,
+  "sat_k": {
+    "paid_search": 200.0,
+    "paid_social": 250.0,
+    "broadcast_tv": 600.0,
+    "stream_tv": 500.0,
+    "direct_mail": 300.0,
+    "print": 200.0,
+    "other": 250.0
+  },
+  "quarter_means_year1": {
+    "paid_search": [
+      100,
+      150,
+      100,
+      200
+    ],
+    "paid_social": [
+      100,
+      150,
+      100,
+      200
+    ],
+    "broadcast_tv": [
+      50,
+      75,
+      50,
+      100
+    ],
+    "stream_tv": [
+      200,
+      300,
+      200,
+      400
+    ],
+    "direct_mail": [
+      50,
+      75,
+      50,
+      100
+    ],
+    "print": [
+      25,
+      37.5,
+      25,
+      50
+    ],
+    "other": [
+      50,
+      125,
+      10,
+      140
+    ]
+  },
+  "year_scalars": [
+    1.0,
+    1.2,
+    0.8
+  ],
+  "within_qtr_cv": 0.08
 }
